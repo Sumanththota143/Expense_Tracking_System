@@ -102,4 +102,23 @@ def insert_data():
     mycur.close()
     connection.close()
 
-insert_data()
+# insert_data()
+
+#delete data by date
+def delete_data_by_date():
+    date = input("enter date to delete records: ")
+    if len(date) == 10 and date[:4].isdigit() and date[4] == "-" and date[5:7].isdigit() and date[7] == "-" and date[8:].isdigit() :
+        query = '''
+            DELETE FROM expenses
+            WHERE expense_date = %s;
+        '''
+        mycur.execute(query,(date,))
+        connection.commit()
+        print("ALL RECORDS ARE DELETED FOR :", date)
+        mycur.close()
+        connection.close()
+    else:
+        print("Enter the date in correct format!")
+        delete_data_by_date()
+
+delete_data_by_date()
