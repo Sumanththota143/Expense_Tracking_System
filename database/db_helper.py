@@ -70,4 +70,36 @@ def fetch_data_by_date():
         print("date format is incorrect\nenter in yyyy-mm-dd format only")
         fetch_data_by_date()
 
-fetch_data_by_date()
+# fetch_data_by_date()
+
+# insert data into table 
+def insert_data():
+    clm_names = ["expense_date", "amount", "category", "notes"]
+    data = [ ]
+    for i in clm_names:
+        if i == "expense_date":
+            print("enter date in YYYY-MM-DD format only")
+        if i == "expense_date":
+            ip = input(f"enter the data for ({i}): ")
+            if len(ip) != 10 and ip[:4].isdigit() and ip[4] != "-" and ip[5:7].isdigit() and ip[7] != "-" and ip[8:].isdigit() :
+                print("incorrect date entered")
+                break
+            else:
+                data.append(ip)
+        if i != "expense_date":
+            ip = input(f"enter the data for ({i}): ")
+            data.append(ip)
+    print("you entered: ",data)
+    query = '''
+        INSERT INTO expenses (expense_date, amount, category, notes)
+        VALUES (%s, %s, %s, %s);
+    '''
+    mycur.execute(query,data)
+    connection.commit()
+    print("enter same date of expense again:")
+    fetch_data_by_date()
+    
+    mycur.close()
+    connection.close()
+
+insert_data()
