@@ -1,0 +1,10 @@
+2026-09-28 18:30:04,437 - INFO - fetching all data
+2026-09-28 18:38:09,920 - INFO - fetching data for date2026-08-20
+2026-09-28 18:38:10,037 - INFO - package: mysql.connector.plugins
+2026-09-28 18:38:10,038 - INFO - plugin_name: caching_sha2_password
+2026-09-28 18:38:10,038 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2026-09-28 18:39:16,735 - INFO - deleting data for date2026-09-01
+2026-09-28 18:39:16,820 - INFO - data inserting with date:2026-09-01
+amt:404.0
+category:Food
+note:plastic bottle
