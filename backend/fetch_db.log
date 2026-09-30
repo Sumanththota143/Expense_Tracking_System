@@ -8,3 +8,25 @@
 amt:404.0
 category:Food
 note:plastic bottle
+2026-09-30 11:28:50,783 - INFO - fetching data for date2026-08-20
+2026-09-30 11:28:50,919 - INFO - package: mysql.connector.plugins
+2026-09-30 11:28:50,919 - INFO - plugin_name: caching_sha2_password
+2026-09-30 11:28:50,920 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2026-09-30 11:47:16,820 - INFO - Fetching expenses for date: 2026-08-21
+2026-09-30 11:47:16,912 - INFO - package: mysql.connector.plugins
+2026-09-30 11:47:16,912 - INFO - plugin_name: caching_sha2_password
+2026-09-30 11:47:16,912 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2026-09-30 11:47:16,915 - INFO - Database connection successful
+2026-09-30 11:47:16,917 - INFO - Found 7 records for 2026-08-21
+2026-09-30 11:48:12,004 - INFO - Fetching expenses for date: 2026-09-01
+2026-09-30 11:48:12,062 - INFO - Database connection successful
+2026-09-30 11:48:12,063 - INFO - Found 1 records for 2026-09-01
+2026-09-30 11:48:32,291 - INFO - Updating expense ID 74 | date=2026-09-01, amount=300.0, category=Bills, notes=current
+2026-09-30 11:48:32,350 - INFO - Database connection successful
+2026-09-30 11:48:32,364 - INFO - Expense ID 74 updated successfully
+2026-09-30 11:48:32,375 - INFO - Fetching expenses for date: 2026-09-01
+2026-09-30 11:48:32,453 - INFO - Database connection successful
+2026-09-30 11:48:32,455 - INFO - Found 1 records for 2026-09-01
+2026-09-30 11:48:50,481 - INFO - Fetching expenses for date: 2026-09-01
+2026-09-30 11:48:50,539 - INFO - Database connection successful
+2026-09-30 11:48:50,541 - INFO - Found 1 records for 2026-09-01

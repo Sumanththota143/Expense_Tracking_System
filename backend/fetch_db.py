@@ -1,259 +1,717 @@
 import mysql.connector
-
 import logging
 
-#basic configuarion mandatory
+
+# ============================================================
+# LOGGING CONFIGURATION
+# ============================================================
+
 logging.basicConfig(
-    #set level as 1st logging level
-    level=logging.INFO ,
-    # by putting a file name all logs are recorded in a file instead of terminal
-    filename="D:/OneDrive/Desktop/bootcamp/my_projects/Expense_Tracking_System/backend/fetch_db.log" ,
-    # to print the time of log created use:
+    level=logging.INFO,
+    filename="D:/OneDrive/Desktop/bootcamp/my_projects/"
+             "Expense_Tracking_System/backend/fetch_db.log",
     format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-    )
+
+# ============================================================
+# DATABASE CONFIGURATION
+# ============================================================
+
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "root",
+    "database": "expense_data"
+}
 
 
-# Function to fetch all rows from expense table
+# ============================================================
+# DATABASE CONNECTION
+# ============================================================
+
+def get_connection():
+
+    try:
+
+        connection = mysql.connector.connect(
+            host=DB_CONFIG["host"],
+            user=DB_CONFIG["user"],
+            password=DB_CONFIG["password"],
+            database=DB_CONFIG["database"]
+        )
+
+        logging.info("Database connection successful")
+
+        return connection
+
+    except mysql.connector.Error as error:
+
+        logging.error(
+            f"Database connection failed: {error}"
+        )
+
+        raise
+
+
+# ============================================================
+# FETCH ALL DATA
+# ============================================================
+
 def fetch_all_data():
-    logging.info("fetching all data")
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root",
-        database="expense_data"
-    )
 
-    mycur = connection.cursor(dictionary=True)
+    logging.info("Fetching all expense data")
 
-    query = """
-        SELECT *
-        FROM expenses;
-    """
+    connection = None
+    mycur = None
 
-    # Execute the query
-    mycur.execute(query)
+    try:
 
-    # Fetch the result
-    result = mycur.fetchall()
+        connection = get_connection()
 
-    # Print the result
-    for row in result:
-        print(row)
+        mycur = connection.cursor(
+            dictionary=True
+        )
 
-    # Close cursor and connection
-    mycur.close()
-    connection.close()
+        query = """
+            SELECT
+                id,
+                expense_date,
+                amount,
+                category,
+                notes
+            FROM expenses
+            ORDER BY expense_date DESC, id DESC;
+        """
 
+        mycur.execute(query)
 
-# Function to fetch data by date
-def fetch_by_date(date):
-    logging.info(f"fetching data for date{date}")
-    print("started")
+        result = mycur.fetchall()
 
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root",
-        database="expense_data"
-    )
-
-    mycur = connection.cursor(dictionary=True)
-
-    query = """
-        SELECT *
-        FROM expenses
-        WHERE expense_date = %s;
-    """
-
-    # Execute the query
-    mycur.execute(query, (date,))
-
-    # Fetch the result
-    result = mycur.fetchall()
-
-    if not result:
-        logging.warning("date format is incorrect")
-        print("no data for this date or incorrect date")
-    else:
-        # Print the result
-        for row in result:
-            print(row)
-
-        mycur.close()
-        connection.close()
+        logging.info(
+            f"Fetched {len(result)} expense records"
+        )
 
         return result
 
-    mycur.close()
-    connection.close()
+    except mysql.connector.Error as error:
+
+        logging.error(
+            f"Error fetching all data: {error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
 
 
-# Insert data into table
-def insert_data(expense_date, amount, category, notes):
-    logging.info(f"data inserting with date:{expense_date}\namt:{amount}\ncategory:{category}\nnote:{notes}")
-    print("***** INSERT DATA *****")
+# ============================================================
+# FETCH DATA BY DATE
+# ============================================================
 
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root",
-        database="expense_data"
+def fetch_by_date(expense_date):
+
+    logging.info(
+        f"Fetching expenses for date: {expense_date}"
     )
 
-    mycur = connection.cursor(dictionary=True)
+    connection = None
+    mycur = None
 
-    clm_names = ["expense_date", "amount", "category", "notes"]
+    try:
 
-    data = []
+        connection = get_connection()
 
-    for i in clm_names:
+        mycur = connection.cursor(
+            dictionary=True
+        )
 
-        # ---------------- DATE ----------------
-        if i == "expense_date":
+        query = """
+            SELECT
+                id,
+                expense_date,
+                amount,
+                category,
+                notes
+            FROM expenses
+            WHERE expense_date = %s
+            ORDER BY id ASC;
+        """
 
-            print("Enter date in YYYY-MM-DD format only")
+        mycur.execute(
+            query,
+            (expense_date,)
+        )
 
-            ip = expense_date
+        result = mycur.fetchall()
 
-            if (
-                len(ip) != 10
-                or not ip[:4].isdigit()
-                or ip[4] != "-"
-                or not ip[5:7].isdigit()
-                or ip[7] != "-"
-                or not ip[8:].isdigit()
-            ):
-                print("Incorrect date entered")
+        logging.info(
+            f"Found {len(result)} records "
+            f"for {expense_date}"
+        )
 
-                mycur.close()
-                connection.close()
+        return result
 
-                return "Incorrect date format"
+    except mysql.connector.Error as error:
 
-            else:
-                data.append(ip)
+        logging.error(
+            f"Error fetching data by date: {error}"
+        )
 
-        # ---------------- CATEGORY ----------------
-        if i == "category":
+        raise
 
-            print("We have the categories:")
+    finally:
 
-            mycur.execute(
-                "SELECT DISTINCT category FROM expenses"
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# FETCH ONE EXPENSE BY ID
+# ============================================================
+
+def fetch_by_id(expense_id):
+
+    logging.info(
+        f"Fetching expense with ID: {expense_id}"
+    )
+
+    connection = None
+    mycur = None
+
+    try:
+
+        connection = get_connection()
+
+        mycur = connection.cursor(
+            dictionary=True
+        )
+
+        query = """
+            SELECT
+                id,
+                expense_date,
+                amount,
+                category,
+                notes
+            FROM expenses
+            WHERE id = %s;
+        """
+
+        mycur.execute(
+            query,
+            (expense_id,)
+        )
+
+        result = mycur.fetchone()
+
+        return result
+
+    except mysql.connector.Error as error:
+
+        logging.error(
+            f"Error fetching expense by ID: {error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# INSERT / ADD NEW EXPENSE
+# ============================================================
+
+def insert_data(
+    expense_date,
+    amount,
+    category,
+    notes
+):
+
+    logging.info(
+        f"Adding expense | "
+        f"date={expense_date}, "
+        f"amount={amount}, "
+        f"category={category}, "
+        f"notes={notes}"
+    )
+
+    connection = None
+    mycur = None
+
+    try:
+
+        connection = get_connection()
+
+        mycur = connection.cursor(
+            dictionary=True
+        )
+
+        query = """
+            INSERT INTO expenses
+            (
+                expense_date,
+                amount,
+                category,
+                notes
+            )
+            VALUES (%s, %s, %s, %s);
+        """
+
+        values = (
+            expense_date,
+            amount,
+            category,
+            notes
+        )
+
+        mycur.execute(
+            query,
+            values
+        )
+
+        connection.commit()
+
+        new_id = mycur.lastrowid
+
+        logging.info(
+            f"Expense inserted successfully. "
+            f"New ID: {new_id}"
+        )
+
+        # Fetch the newly inserted record
+        mycur.execute(
+            """
+            SELECT
+                id,
+                expense_date,
+                amount,
+                category,
+                notes
+            FROM expenses
+            WHERE id = %s;
+            """,
+            (new_id,)
+        )
+
+        result = mycur.fetchone()
+
+        return result
+
+    except mysql.connector.Error as error:
+
+        if connection:
+            connection.rollback()
+
+        logging.error(
+            f"Error inserting expense: {error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# UPDATE ONE EXPENSE BY ID
+# ============================================================
+
+def update_data(
+    expense_id,
+    expense_date,
+    amount,
+    category,
+    notes
+):
+
+    logging.info(
+        f"Updating expense ID {expense_id} | "
+        f"date={expense_date}, "
+        f"amount={amount}, "
+        f"category={category}, "
+        f"notes={notes}"
+    )
+
+    connection = None
+    mycur = None
+
+    try:
+
+        connection = get_connection()
+
+        mycur = connection.cursor(
+            dictionary=True
+        )
+
+        query = """
+            UPDATE expenses
+            SET
+                expense_date = %s,
+                amount = %s,
+                category = %s,
+                notes = %s
+            WHERE id = %s;
+        """
+
+        values = (
+            expense_date,
+            amount,
+            category,
+            notes,
+            expense_id
+        )
+
+        mycur.execute(
+            query,
+            values
+        )
+
+        connection.commit()
+
+        # No record with this ID
+        if mycur.rowcount == 0:
+
+            logging.warning(
+                f"Expense ID {expense_id} "
+                f"was not found"
             )
 
-            category_list = mycur.fetchall()
+            return None
 
-            cat_val = []
+        logging.info(
+            f"Expense ID {expense_id} "
+            f"updated successfully"
+        )
 
-            for cat in category_list:
-                cat_val.append(cat)
+        # Return updated record
+        mycur.execute(
+            """
+            SELECT
+                id,
+                expense_date,
+                amount,
+                category,
+                notes
+            FROM expenses
+            WHERE id = %s;
+            """,
+            (expense_id,)
+        )
 
-            print(cat_val)
+        result = mycur.fetchone()
 
-            ip = category
+        return result
 
-            data.append(ip)
+    except mysql.connector.Error as error:
 
-        # ---------------- AMOUNT / NOTES ----------------
-        if i != "expense_date" and i != "category":
+        if connection:
+            connection.rollback()
 
-            if i == "amount":
-                ip = amount
-            else:
-                ip = notes
+        logging.error(
+            f"Error updating expense "
+            f"{expense_id}: {error}"
+        )
 
-            data.append(ip)
+        raise
 
-    print("You entered:", data)
+    finally:
 
-    # ---------------- INSERT QUERY ----------------
+        if mycur:
+            mycur.close()
 
-    query = """
-        INSERT INTO expenses (expense_date, amount, category, notes)
-        VALUES (%s, %s, %s, %s)
-    """
-
-    mycur.execute(query, data)
-
-    connection.commit()
-
-    mycur.close()
-    connection.close()
-
-    return "Expense added successfully"
+        if connection:
+            connection.close()
 
 
-# Delete data by date
-def delete_data_by_date(date):
-    logging.info(f"deleting data for date{date}")
-    print("***** DELETE DATA BY DATE *****")
+# ============================================================
+# DELETE ONE EXPENSE BY ID
+# ============================================================
 
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root",
-        database="expense_data"
+def delete_data_by_id(expense_id):
+
+    logging.info(
+        f"Deleting expense ID: {expense_id}"
     )
 
-    mycur = connection.cursor(dictionary=True)
+    connection = None
+    mycur = None
 
-    if (
-        len(date) == 10
-        and date[:4].isdigit()
-        and date[4] == "-"
-        and date[5:7].isdigit()
-        and date[7] == "-"
-        and date[8:].isdigit()
-    ):
+    try:
+
+        connection = get_connection()
+
+        mycur = connection.cursor()
+
+        query = """
+            DELETE FROM expenses
+            WHERE id = %s;
+        """
+
+        mycur.execute(
+            query,
+            (expense_id,)
+        )
+
+        connection.commit()
+
+        deleted = mycur.rowcount > 0
+
+        if deleted:
+
+            logging.info(
+                f"Expense ID {expense_id} "
+                f"deleted successfully"
+            )
+
+        else:
+
+            logging.warning(
+                f"Expense ID {expense_id} "
+                f"was not found"
+            )
+
+        return deleted
+
+    except mysql.connector.Error as error:
+
+        if connection:
+            connection.rollback()
+
+        logging.error(
+            f"Error deleting expense "
+            f"{expense_id}: {error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# DELETE ALL DATA FOR A DATE
+#
+# WARNING:
+# This deletes EVERY expense for that date.
+#
+# This is kept as a separate function in case you need it
+# for administrative purposes.
+# ============================================================
+
+def delete_data_by_date(expense_date):
+
+    logging.warning(
+        f"Deleting ALL expenses for date: "
+        f"{expense_date}"
+    )
+
+    connection = None
+    mycur = None
+
+    try:
+
+        connection = get_connection()
+
+        mycur = connection.cursor()
 
         query = """
             DELETE FROM expenses
             WHERE expense_date = %s;
         """
 
-        mycur.execute(query, (date,))
+        mycur.execute(
+            query,
+            (expense_date,)
+        )
 
         connection.commit()
 
-        print("ALL RECORDS ARE DELETED FOR :", date)
+        deleted_count = mycur.rowcount
 
-    else:
+        logging.warning(
+            f"Deleted {deleted_count} records "
+            f"for date {expense_date}"
+        )
 
-        print("Enter the date in correct format!")
+        return deleted_count
 
-    mycur.close()
-    connection.close()
+    except mysql.connector.Error as error:
+
+        if connection:
+            connection.rollback()
+
+        logging.error(
+            f"Error deleting records for "
+            f"{expense_date}: {error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
 
 
-# Function to get sum of all expenses for each category
-def fetch_expenses_summary(start_date, end_date):
-    logging.info(f"summary for date range {start_date} to {end_date}")
-    connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root",
-        database="expense_data"
+# ============================================================
+# EXPENSE SUMMARY BY CATEGORY
+# ============================================================
+
+def fetch_expenses_summary(
+    start_date,
+    end_date
+):
+
+    logging.info(
+        f"Fetching expense summary "
+        f"from {start_date} to {end_date}"
     )
 
-    mycur = connection.cursor(dictionary=True)
+    connection = None
+    mycur = None
 
-    query = """
-        SELECT category, SUM(amount) as total
-        FROM expenses
-        WHERE expense_date
-        BETWEEN %s AND %s
-        GROUP BY category;
-    """
+    try:
 
-    mycur.execute(query, (start_date, end_date))
+        connection = get_connection()
 
-    result = mycur.fetchall()
+        mycur = connection.cursor(
+            dictionary=True
+        )
 
-    for i in result:
-        print(i)
+        query = """
+            SELECT
+                category,
+                SUM(amount) AS total
+            FROM expenses
+            WHERE expense_date
+            BETWEEN %s AND %s
+            GROUP BY category
+            ORDER BY total DESC;
+        """
 
-    mycur.close()
-    connection.close()
+        mycur.execute(
+            query,
+            (
+                start_date,
+                end_date
+            )
+        )
 
+        result = mycur.fetchall()
+
+        logging.info(
+            f"Found {len(result)} categories "
+            f"in summary"
+        )
+
+        return result
+
+    except mysql.connector.Error as error:
+
+        logging.error(
+            f"Error generating expense summary: "
+            f"{error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
+
+
+# ============================================================
+# TOTAL EXPENSE FOR A DATE RANGE
+# ============================================================
+
+def fetch_total_expenses(
+    start_date,
+    end_date
+):
+
+    logging.info(
+        f"Calculating total expenses "
+        f"from {start_date} to {end_date}"
+    )
+
+    connection = None
+    mycur = None
+
+    try:
+
+        connection = get_connection()
+
+        mycur = connection.cursor(
+            dictionary=True
+        )
+
+        query = """
+            SELECT
+                COALESCE(SUM(amount), 0) AS total
+            FROM expenses
+            WHERE expense_date
+            BETWEEN %s AND %s;
+        """
+
+        mycur.execute(
+            query,
+            (
+                start_date,
+                end_date
+            )
+        )
+
+        result = mycur.fetchone()
+
+        return result
+
+    except mysql.connector.Error as error:
+
+        logging.error(
+            f"Error calculating total expenses: "
+            f"{error}"
+        )
+
+        raise
+
+    finally:
+
+        if mycur:
+            mycur.close()
+
+        if connection:
+            connection.close()
